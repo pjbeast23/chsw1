@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AQI Prediction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center">
+    <div class="max-w-md w-full mx-4 bg-white rounded-lg shadow-lg p-6 mt-10">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Air Quality Index (AQI) Predictor</h1>
+        <form id="aqiForm" class="space-y-4">
+            <div>
+                <label for="pm25" class="block text-sm font-medium text-gray-700">PM2.5 (μg/m³)</label>
+                <input type="number" id="pm25" name="pm25" step="0.1" min="0" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="pm10" class="block text-sm font-medium text-gray-700">PM10 (μg/m³)</label>
+                <input type="number" id="pm10" name="pm10" step="0.1" min="0" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="no2" class="block text-sm font-medium text-gray-700">NO2 (μg/m³)</label>
+                <input type="number" id="no2" name="no2" step="0.1" min="0" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            <button type="submit" id="submitBtn"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Predict AQI
+            </button>
+        </form>
+        <p id="result" class="mt-4 text-center text-gray-600"></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('aqiForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const result = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Predicting...';
+            result.textContent = '';
+
+            const pm25 = document.getElementById('pm25').value;
+            const pm10 = document.getElementById('pm10').value;
+            const no2 = document.getElementById('no2').value;
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pm25, pm10, no2 })
+                });
+                const data = await response.json();
+                if (data.predicted_aqi) {
+                    result.className = 'mt-4 text-center text-green-600 font-medium';
+                    result.textContent = `Predicted AQI: ${parseFloat(data.predicted_aqi).toFixed(2)}`;
+                } else {
+                    result.className = 'mt-4 text-center text-red-600';
+                    result.textContent = `Error: ${data.error}`;
+                }
+            } catch (error) {
+                result.className = 'mt-4 text-center text-red-600';
+                result.textContent = `Error: ${error.message}`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Predict AQI';
+            }
+        });
+    </script>
+</body>
+</html>
