@@ -5,54 +5,215 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AQI Prediction</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
-            background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+            background: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%);
             min-height: 100vh;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .loading {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="flex items-center justify-center">
-    <div class="max-w-md w-full mx-4 bg-white rounded-lg shadow-lg p-6 mt-10">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Air Quality Index (AQI) Predictor</h1>
-        <form id="aqiForm" class="space-y-4">
-            <div>
-                <label for="pm25" class="block text-sm font-medium text-gray-700">PM2.5 (μg/m³)</label>
-                <input type="number" id="pm25" name="pm25" step="0.1" min="0" required
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+<body class="flex flex-col items-center justify-center p-4">
+    <div class="max-w-4xl w-full mx-4 bg-white rounded-lg shadow-lg p-6 mt-10">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Air Quality Index (AQI) Predictor</h1>
+        <p class="text-center text-gray-600 mb-6">Enter environmental parameters to predict the AQI</p>
+        
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <form id="aqiForm" class="space-y-4">
+                    <div>
+                        <label for="pm25" class="block text-sm font-medium text-gray-700">
+                            PM2.5 (μg/m³)
+                            <span class="tooltip">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                                <span class="tooltiptext">Fine particulate matter less than 2.5 micrometers in diameter</span>
+                            </span>
+                        </label>
+                        <input type="number" id="pm25" name="pm25" step="0.1" min="0" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="pm10" class="block text-sm font-medium text-gray-700">
+                            Humidity (%)
+                            <span class="tooltip">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                                <span class="tooltiptext">Relative humidity in the air</span>
+                            </span>
+                        </label>
+                        <input type="number" id="pm10" name="pm10" step="0.1" min="0" max="100" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="no2" class="block text-sm font-medium text-gray-700">
+                            Temperature (°C)
+                            <span class="tooltip">
+                                <i class="fas fa-info-circle text-blue-500"></i>
+                                <span class="tooltiptext">Ambient temperature in Celsius</span>
+                            </span>
+                        </label>
+                        <input type="number" id="no2" name="no2" step="0.1" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <button type="submit" id="submitBtn"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                        <span id="submitText">Predict AQI</span>
+                        <i id="loadingIcon" class="fas fa-spinner loading ml-2 hidden"></i>
+                    </button>
+                </form>
+
+                <div id="result" class="mt-4 p-4 rounded-lg hidden">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">Predicted AQI</h3>
+                        <span id="aqiValue" class="text-2xl font-bold"></span>
+                    </div>
+                    <div id="aqiCategory" class="mt-2 p-2 rounded text-center font-medium"></div>
+                    <div id="healthImpact" class="mt-2 text-sm"></div>
+                </div>
             </div>
-            <div>
-                <label for="pm10" class="block text-sm font-medium text-gray-700">Humidity (μg/m³)</label>
-                <input type="number" id="pm10" name="pm10" step="0.1" min="0" required
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+
+            <div class="space-y-4">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-2">AQI Categories</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                            <span>0-50: Good</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+                            <span>51-100: Moderate</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
+                            <span>101-150: Unhealthy for Sensitive Groups</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+                            <span>151-200: Unhealthy</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
+                            <span>201-300: Very Unhealthy</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-maroon-500 rounded-full mr-2"></div>
+                            <span>301+: Hazardous</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-2">Recent Predictions</h3>
+                    <canvas id="historyChart" height="200"></canvas>
+                </div>
             </div>
-            <div>
-                <label for="no2" class="block text-sm font-medium text-gray-700">Temperature (μg/m³)</label>
-                <input type="number" id="no2" name="no2" step="0.1" min="0" required
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-            </div>
-            <button type="submit" id="submitBtn"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Predict AQI
-            </button>
-        </form>
-        <p id="result" class="mt-4 text-center text-gray-600"></p>
+        </div>
     </div>
 
     <script>
         const form = document.getElementById('aqiForm');
         const submitBtn = document.getElementById('submitBtn');
+        const submitText = document.getElementById('submitText');
+        const loadingIcon = document.getElementById('loadingIcon');
         const result = document.getElementById('result');
+        const aqiValue = document.getElementById('aqiValue');
+        const aqiCategory = document.getElementById('aqiCategory');
+        const healthImpact = document.getElementById('healthImpact');
+        const historyChart = document.getElementById('historyChart');
+        
+        let predictionHistory = [];
+        let chart = null;
+
+        function getAQICategory(aqi) {
+            if (aqi <= 50) return { category: 'Good', color: 'bg-green-500', text: 'text-green-500' };
+            if (aqi <= 100) return { category: 'Moderate', color: 'bg-yellow-500', text: 'text-yellow-500' };
+            if (aqi <= 150) return { category: 'Unhealthy for Sensitive Groups', color: 'bg-orange-500', text: 'text-orange-500' };
+            if (aqi <= 200) return { category: 'Unhealthy', color: 'bg-red-500', text: 'text-red-500' };
+            if (aqi <= 300) return { category: 'Very Unhealthy', color: 'bg-purple-500', text: 'text-purple-500' };
+            return { category: 'Hazardous', color: 'bg-maroon-500', text: 'text-maroon-500' };
+        }
+
+        function getHealthImpact(aqi) {
+            if (aqi <= 50) return 'Air quality is satisfactory, and air pollution poses little or no risk.';
+            if (aqi <= 100) return 'Air quality is acceptable. However, there may be a risk for some people.';
+            if (aqi <= 150) return 'Members of sensitive groups may experience health effects.';
+            if (aqi <= 200) return 'Everyone may begin to experience health effects.';
+            if (aqi <= 300) return 'Health warnings of emergency conditions.';
+            return 'Health alert: everyone may experience more serious health effects.';
+        }
+
+        function updateChart() {
+            if (chart) {
+                chart.destroy();
+            }
+
+            const labels = predictionHistory.map((_, i) => `Prediction ${i + 1}`);
+            const data = predictionHistory.map(p => p.aqi);
+
+            chart = new Chart(historyChart, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'AQI History',
+                        data: data,
+                        borderColor: 'rgb(59, 130, 246)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Predicting...';
-            result.textContent = '';
+            submitText.textContent = 'Predicting...';
+            loadingIcon.classList.remove('hidden');
+            result.classList.add('hidden');
 
-            const pm25 = document.getElementById('pm25').value;
-            const pm10 = document.getElementById('pm10').value;
-            const no2 = document.getElementById('no2').value;
+            const pm25 = parseFloat(document.getElementById('pm25').value);
+            const pm10 = parseFloat(document.getElementById('pm10').value);
+            const no2 = parseFloat(document.getElementById('no2').value);
 
             try {
                 const response = await fetch('/predict', {
@@ -60,20 +221,45 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pm25, pm10, no2 })
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
+                
                 if (data.predicted_aqi) {
-                    result.className = 'mt-4 text-center text-green-600 font-medium';
-                    result.textContent = `Predicted AQI: ${parseFloat(data.predicted_aqi).toFixed(2)}`;
+                    const aqi = parseFloat(data.predicted_aqi);
+                    const category = getAQICategory(aqi);
+                    
+                    result.classList.remove('hidden');
+                    aqiValue.textContent = aqi.toFixed(2);
+                    aqiCategory.textContent = category.category;
+                    aqiCategory.className = `mt-2 p-2 rounded text-center font-medium ${category.color} text-white`;
+                    healthImpact.textContent = getHealthImpact(aqi);
+
+                    // Add to history
+                    predictionHistory.push({ aqi, timestamp: new Date() });
+                    if (predictionHistory.length > 10) {
+                        predictionHistory.shift();
+                    }
+                    updateChart();
                 } else {
-                    result.className = 'mt-4 text-center text-red-600';
-                    result.textContent = `Error: ${data.error}`;
+                    throw new Error(data.error || 'Unknown error occurred');
                 }
             } catch (error) {
-                result.className = 'mt-4 text-center text-red-600';
-                result.textContent = `Error: ${error.message}`;
+                result.classList.remove('hidden');
+                result.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-700';
+                result.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        <span>Error: ${error.message}</span>
+                    </div>
+                `;
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Predict AQI';
+                submitText.textContent = 'Predict AQI';
+                loadingIcon.classList.add('hidden');
             }
         });
     </script>
