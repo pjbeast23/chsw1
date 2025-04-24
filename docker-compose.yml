@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  aqi-app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
