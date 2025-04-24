@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AQI Prediction</title>
+    <title>Advanced AQI Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -50,127 +50,499 @@
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.2); opacity: 0.8; }
         }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab {
+            cursor: pointer;
+            padding: 10px 15px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            border-bottom: 2px solid #3b82f6;
+            font-weight: bold;
+            color: #3b82f6;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center p-4">
-    <div class="max-w-4xl w-full mx-4 bg-white rounded-lg shadow-lg p-6 mt-10">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Air Quality Index (AQI) Predictor</h1>
-        <p class="text-center text-gray-600 mb-6">Enter environmental parameters to predict the AQI using EPA standards</p>
+    <div class="max-w-6xl w-full mx-4 bg-white rounded-lg shadow-lg p-6 mt-10 mb-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Advanced Air Quality Index (AQI) Analysis</h1>
+        <p class="text-center text-gray-600 mb-6">Analyze air quality based on PM2.5, temperature, and humidity with enhanced data visualizations and predictions</p>
         
-        <div class="grid md:grid-cols-2 gap-6">
-            <div class="space-y-4">
-                <form id="aqiForm" class="space-y-4">
-                    <div>
-                        <label for="pm25" class="block text-sm font-medium text-gray-700">
-                            PM2.5 (μg/m³)
-                            <span class="tooltip">
-                                <i class="fas fa-info-circle text-blue-500"></i>
-                                <span class="tooltiptext">Fine particulate matter less than 2.5 micrometers in diameter</span>
-                            </span>
-                        </label>
-                        <input type="number" id="pm25" name="pm25" step="0.1" min="0" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="pm10" class="block text-sm font-medium text-gray-700">
-                            Humidity (%)
-                            <span class="tooltip">
-                                <i class="fas fa-info-circle text-blue-500"></i>
-                                <span class="tooltiptext">Particulate matter less than 10 micrometers in diameter</span>
-                            </span>
-                        </label>
-                        <input type="number" id="pm10" name="pm10" step="0.1" min="0" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="no2" class="block text-sm font-medium text-gray-700">
-                            Temperature (°C)
-                            <span class="tooltip">
-                                <i class="fas fa-info-circle text-blue-500"></i>
-                                <span class="tooltiptext">Nitrogen dioxide concentration</span>
-                            </span>
-                        </label>
-                        <input type="number" id="no2" name="no2" step="0.1" min="0" required
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    </div>
-                    <button type="submit" id="submitBtn"
-                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                        <span id="submitText">Predict AQI</span>
-                        <i id="loadingIcon" class="fas fa-spinner loading ml-2 hidden"></i>
-                    </button>
-                </form>
-
-                <div id="result" class="mt-4 p-4 rounded-lg hidden">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold">Predicted AQI</h3>
-                        <span id="aqiValue" class="text-2xl font-bold"></span>
-                    </div>
-                    <div id="aqiCategory" class="mt-2 p-2 rounded text-center font-medium"></div>
-                    <div id="healthImpact" class="mt-2 text-sm"></div>
-                    <div class="mt-4" id="pollutantDetails">
-                        <h4 class="font-semibold mb-1">Pollutant AQI Values:</h4>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div class="p-2 bg-gray-50 rounded text-center">
-                                <div class="text-sm text-gray-500">PM2.5</div>
-                                <div id="pm25Value" class="font-bold"></div>
+        <div class="tabs flex border-b border-gray-200 mb-4 overflow-x-auto">
+            <div class="tab active" data-tab="predictor">AQI Predictor</div>
+            <div class="tab" data-tab="timeseries">Time Series Analysis</div>
+            <div class="tab" data-tab="correlation">Correlation Analysis</div>
+            <div class="tab" data-tab="model">Prediction Model</div>
+            <div class="tab" data-tab="info">AQI Information</div>
+        </div>
+        
+        <div class="tab-content active" id="predictor">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <form id="aqiForm" class="space-y-4">
+                        <div>
+                            <label for="pm25" class="block text-sm font-medium text-gray-700">
+                                PM2.5 (μg/m³)
+                                <span class="tooltip">
+                                    <i class="fas fa-info-circle text-blue-500"></i>
+                                    <span class="tooltiptext">Fine particulate matter less than 2.5 micrometers in diameter</span>
+                                </span>
+                            </label>
+                            <input type="number" id="pm25" name="pm25" step="0.1" min="0" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="humidity" class="block text-sm font-medium text-gray-700">
+                                Humidity (%)
+                                <span class="tooltip">
+                                    <i class="fas fa-info-circle text-blue-500"></i>
+                                    <span class="tooltiptext">Relative humidity percentage in the air</span>
+                                </span>
+                            </label>
+                            <input type="number" id="humidity" name="humidity" step="0.1" min="0" max="100" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="temperature" class="block text-sm font-medium text-gray-700">
+                                Temperature (°C)
+                                <span class="tooltip">
+                                    <i class="fas fa-info-circle text-blue-500"></i>
+                                    <span class="tooltiptext">Ambient air temperature in degrees Celsius</span>
+                                </span>
+                            </label>
+                            <input type="number" id="temperature" name="temperature" step="0.1" min="-50" max="60" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <button type="submit" id="submitBtn"
+                                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                            <span id="submitText">Analyze Air Quality</span>
+                            <i id="loadingIcon" class="fas fa-spinner loading ml-2 hidden"></i>
+                        </button>
+                    </form>
+    
+                    <div id="result" class="mt-4 p-4 rounded-lg hidden">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold">Predicted AQI</h3>
+                            <span id="aqiValue" class="text-2xl font-bold"></span>
+                        </div>
+                        <div id="aqiCategory" class="mt-2 p-2 rounded text-center font-medium"></div>
+                        <div id="healthImpact" class="mt-2 text-sm"></div>
+                        
+                        <div class="mt-4 bg-gray-50 p-3 rounded-lg">
+                            <h4 class="font-semibold mb-2">Health Recommendations</h4>
+                            <div id="healthRecommendations" class="text-sm"></div>
+                        </div>
+                        
+                        <div class="mt-4 bg-blue-50 p-3 rounded-lg">
+                            <h4 class="font-semibold mb-2">Weather Context</h4>
+                            <div id="weatherContext" class="text-sm"></div>
+                        </div>
+                        
+                        <div class="mt-4" id="pollutantDetails">
+                            <h4 class="font-semibold mb-1">Pollutant AQI Values:</h4>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="p-2 bg-gray-50 rounded text-center">
+                                    <div class="text-sm text-gray-500">PM2.5</div>
+                                    <div id="pm25Value" class="font-bold"></div>
+                                </div>
+                                <div class="p-2 bg-gray-50 rounded text-center">
+                                    <div class="text-sm text-gray-500">PM10</div>
+                                    <div id="pm10Value" class="font-bold"></div>
+                                </div>
+                                <div class="p-2 bg-gray-50 rounded text-center">
+                                    <div class="text-sm text-gray-500">NO2</div>
+                                    <div id="no2Value" class="font-bold"></div>
+                                </div>
                             </div>
-                            <div class="p-2 bg-gray-50 rounded text-center">
-                                <div class="text-sm text-gray-500">PM10</div>
-                                <div id="pm10Value" class="font-bold"></div>
+                        </div>
+                        
+                        <div id="pm25PredictionSection" class="mt-4 p-3 bg-green-50 rounded-lg hidden">
+                            <h4 class="font-semibold mb-2">PM2.5 Prediction Model</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <div class="text-sm text-gray-700">Actual PM2.5:</div>
+                                    <div id="actualPM25" class="font-semibold"></div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-700">Predicted PM2.5:</div>
+                                    <div id="predictedPM25" class="font-semibold"></div>
+                                </div>
+                                <div class="col-span-2">
+                                    <div class="text-sm text-gray-700">Difference:</div>
+                                    <div id="pm25Difference" class="font-semibold"></div>
+                                </div>
                             </div>
-                            <div class="p-2 bg-gray-50 rounded text-center">
-                                <div class="text-sm text-gray-500">NO2</div>
-                                <div id="no2Value" class="font-bold"></div>
+                            <div class="mt-2 text-sm text-gray-500">
+                                Prediction based on temperature and humidity using a linear regression model.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2">AQI Categories (EPA Standard)</h3>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-green-500 rounded-full mr-2 breathing-dot"></div>
+                                <span>0-50: Good</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+                                <span>51-100: Moderate</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
+                                <span>101-150: Unhealthy for Sensitive Groups</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+                                <span>151-200: Unhealthy</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
+                                <span>201-300: Very Unhealthy</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-gray-900 rounded-full mr-2"></div>
+                                <span>301+: Hazardous</span>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2">Recent Predictions</h3>
+                        <canvas id="historyChart" height="200"></canvas>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2">Parameter Relationships</h3>
+                        <canvas id="paramRelationshipChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="timeseries">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-4">Time Series Analysis</h2>
+                <p class="mb-4 text-gray-700">Analyzing temporal patterns in PM2.5, temperature, and humidity can reveal important trends and relationships in air quality data.</p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-2">Parameter Statistics</h3>
+                        <div id="timeSeriesStats" class="grid grid-cols-4 gap-2">
+                            <div class="col-span-4 text-center py-8">
+                                <i class="fas fa-spinner loading text-blue-500 text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-2">Insights</h3>
+                        <div id="timeSeriesInsights" class="text-sm text-gray-700">
+                            <p>Loading insights...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 space-y-6">
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-4">Time Series Plot</h3>
+                        <div id="timeSeriesPlotContainer" class="w-full">
+                            <div class="text-center py-8">
+                                <i class="fas fa-spinner loading text-blue-500 text-2xl"></i>
+                                <p class="mt-2 text-gray-500">Loading time series data...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-4">Average Hourly Patterns</h3>
+                        <div id="hourlyPatternsContainer" class="w-full">
+                            <div class="text-center py-8">
+                                <i class="fas fa-spinner loading text-blue-500 text-2xl"></i>
+                                <p class="mt-2 text-gray-500">Loading hourly patterns...</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="space-y-4">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-2">AQI Categories (EPA Standard)</h3>
-                    <div class="space-y-2">
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-green-500 rounded-full mr-2 breathing-dot"></div>
-                            <span>0-50: Good</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
-                            <span>51-100: Moderate</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
-                            <span>101-150: Unhealthy for Sensitive Groups</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
-                            <span>151-200: Unhealthy</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
-                            <span>201-300: Very Unhealthy</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-gray-900 rounded-full mr-2"></div>
-                            <span>301+: Hazardous</span>
+        </div>
+        
+        <div class="tab-content" id="correlation">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-4">Correlation Analysis</h2>
+                <p class="mb-4 text-gray-700">Understand how PM2.5, temperature, and humidity interact with each other to gain deeper insights into air quality factors.</p>
+                
+                <div class="bg-white rounded-lg p-4 shadow mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Correlation Coefficients</h3>
+                    <div id="correlationStats" class="grid grid-cols-3 gap-4 mb-4">
+                        <div class="text-center py-8 col-span-3">
+                            <i class="fas fa-spinner loading text-blue-500 text-2xl"></i>
                         </div>
                     </div>
                 </div>
-
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-2">Recent Predictions</h3>
-                    <canvas id="historyChart" height="200"></canvas>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-4">Correlation Heatmap</h3>
+                        <div id="correlationPlotContainer" class="w-full">
+                            <div class="text-center py-8">
+                                <i class="fas fa-spinner loading text-blue-500 text-2xl"></i>
+                                <p class="mt-2 text-gray-500">Loading correlation data...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-2">Interpretation</h3>
+                        <div id="correlationInterpretation" class="text-sm text-gray-700 space-y-2">
+                            <p>Loading interpretations...</p>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-blue-50 rounded">
+                            <h4 class="font-semibold text-sm mb-1">What This Means</h4>
+                            <p class="text-sm text-gray-700">
+                                Correlation coefficients range from -1 to 1:
+                                <ul class="list-disc ml-5 mt-1 space-y-1">
+                                    <li>Values close to 1 indicate a strong positive correlation</li>
+                                    <li>Values close to -1 indicate a strong negative correlation</li>
+                                    <li>Values close to 0 indicate little to no correlation</li>
+                                </ul>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="model">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-4">PM2.5 Prediction Model</h2>
+                <p class="mb-4 text-gray-700">This linear regression model predicts PM2.5 levels based on temperature and humidity data.</p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-2">Model Performance</h3>
+                        <div id="modelPerformance" class="text-sm text-gray-700">
+                            <div class="text-center py-8">
+                                <i class="fas fa-spinner loading text-blue-500 text-2xl"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-gray-50 rounded">
+                            <h4 class="font-semibold text-sm mb-1">Model Formula</h4>
+                            <div id="modelFormula" class="text-sm bg-gray-100 p-2 rounded font-mono">
+                                Loading formula...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-2">Model Explanation</h3>
+                        <div id="modelExplanation" class="text-sm text-gray-700 space-y-2">
+                            <p>Loading model explanation...</p>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-blue-50 rounded">
+                            <h4 class="font-semibold text-sm mb-1">How to Use This Model</h4>
+                            <p class="text-sm text-gray-700">
+                                This model allows you to predict PM2.5 levels using just temperature and humidity readings,
+                                which can be useful when PM2.5 monitoring equipment is unavailable. The model's accuracy
+                                depends on the R² value - higher is better.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 bg-white rounded-lg p-4 shadow">
+                    <h3 class="text-lg font-semibold mb-4">Try the Model</h3>
+                    <form id="modelPredictForm" class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="modelTemp" class="block text-sm font-medium text-gray-700">Temperature (°C)</label>
+                            <input type="number" id="modelTemp" step="0.1" min="-50" max="60" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="modelHumidity" class="block text-sm font-medium text-gray-700">Humidity (%)</label>
+                            <input type="number" id="modelHumidity" step="0.1" min="0" max="100" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" id="modelPredictBtn"
+                                    class="block w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                Predict PM2.5
+                            </button>
+                        </div>
+                    </form>
+                    <div id="modelPredictionResult" class="mt-4 p-3 rounded hidden">
+                        <!-- Prediction results will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="info">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-4">AQI Information</h2>
+                <p class="mb-4 text-gray-700">Learn about Air Quality Index and how it affects health.</p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-2">What is PM2.5?</h3>
+                        <p class="text-sm text-gray-700 mb-4">
+                            PM2.5 refers to atmospheric particulate matter (PM) that have a diameter of less than 2.5 micrometers,
+                            which is about 3% the diameter of a human hair. These fine particles are produced from all types of
+                            combustion, including motor vehicles, power plants, residential wood burning, forest fires, agricultural
+                            burning, and some industrial processes.
+                        </p>
+                        <p class="text-sm text-gray-700">
+                            Due to their small size, PM2.5 can penetrate deep into the lungs and even enter the bloodstream,
+                            potentially causing serious health problems. They are known to trigger or worsen chronic disease such as
+                            asthma, heart attack, bronchitis, and other respiratory problems.
+                        </p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <h3 class="text-lg font-semibold mb-2">Temperature, Humidity, and Air Quality</h3>
+                        <p class="text-sm text-gray-700 mb-4">
+                            Temperature and humidity play significant roles in air quality:
+                        </p>
+                        <ul class="text-sm text-gray-700 space-y-2 list-disc ml-5">
+                            <li>
+                                <span class="font-semibold">Temperature</span>: Higher temperatures can accelerate the formation
+                                of ground-level ozone. Hot, sunny days often lead to increased photochemical reactions that form smog.
+                            </li>
+                            <li>
+                                <span class="font-semibold">Humidity</span>: High humidity can trap pollutants near the ground and
+                                may contribute to the formation of secondary particles. It can also make the air feel heavier and
+                                more uncomfortable for those with respiratory conditions.
+                            </li>
+                            <li>
+                                <span class="font-semibold">Seasonal Changes</span>: Air quality often varies with seasons due to
+                                changing weather patterns, human activities, and natural factors like pollen or wildfire smoke.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-6 bg-white rounded-lg p-4 shadow">
+                    <h3 class="text-lg font-semibold mb-2">AQI Categories and Health Implications</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AQI Range</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Health Implications</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">0-50</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Good</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-block w-6 h-6 bg-green-500 rounded-full"></span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Air quality is satisfactory, and air pollution poses little or no risk.</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">51-100</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Moderate</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-block w-6 h-6 bg-yellow-500 rounded-full"></span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Air quality is acceptable. However, there may be a risk for some people, particularly those who are unusually sensitive to air pollution.</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">101-150</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Unhealthy for Sensitive Groups</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-block w-6 h-6 bg-orange-500 rounded-full"></span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Members of sensitive groups may experience health effects. The general public is less likely to be affected.</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">151-200</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Unhealthy</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-block w-6 h-6 bg-red-500 rounded-full"></span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Some members of the general public may experience health effects; members of sensitive groups may experience more serious health effects.</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">201-300</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Very Unhealthy</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-block w-6 h-6 bg-purple-500 rounded-full"></span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Health alert: The risk of health effects is increased for everyone.</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">301+</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Hazardous</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-block w-6 h-6 bg-gray-900 rounded-full"></span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">Health warning of emergency conditions: everyone is more likely to be affected.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="mt-6 max-w-4xl w-full mx-4 p-4 bg-blue-50 rounded-lg shadow text-center text-sm text-gray-600">
-        <p>© 2025 AQI Predictor - College Project | <a href="https://www.epa.gov/aqi" target="_blank" class="text-blue-500 hover:underline">Learn more about EPA AQI standards</a></p>
+    <div class="max-w-6xl w-full mx-4 p-4 bg-blue-50 rounded-lg shadow text-center text-sm text-gray-600 mb-10">
+        <p>© 2025 Advanced AQI Analyzer - College Project | <a href="https://www.epa.gov/aqi" target="_blank" class="text-blue-500 hover:underline">Learn more about EPA AQI standards</a></p>
     </div>
 
     <script>
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to selected tab and content
+                tab.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+                
+                // Load data for specific tabs when they're clicked
+                if (tabId === 'timeseries' && !timeSeriesLoaded) {
+                    loadTimeSeriesData();
+                    timeSeriesLoaded = true;
+                } else if (tabId === 'correlation' && !correlationLoaded) {
+                    loadCorrelationData();
+                    correlationLoaded = true;
+                } else if (tabId === 'model' && !modelLoaded) {
+                    loadModelInfo();
+                    modelLoaded = true;
+                }
+            });
+        });
+        
+        // Track if data has been loaded for tabs
+        let timeSeriesLoaded = false;
+        let correlationLoaded = false;
+        let modelLoaded = false;
+        
+        // Form submission
         const form = document.getElementById('aqiForm');
         const submitBtn = document.getElementById('submitBtn');
         const submitText = document.getElementById('submitText');
@@ -180,12 +552,20 @@
         const aqiCategory = document.getElementById('aqiCategory');
         const healthImpact = document.getElementById('healthImpact');
         const historyChart = document.getElementById('historyChart');
+        const paramRelationshipChart = document.getElementById('paramRelationshipChart');
         const pm25Value = document.getElementById('pm25Value');
         const pm10Value = document.getElementById('pm10Value');
         const no2Value = document.getElementById('no2Value');
+        const healthRecommendations = document.getElementById('healthRecommendations');
+        const weatherContext = document.getElementById('weatherContext');
+        const pm25PredictionSection = document.getElementById('pm25PredictionSection');
+        const actualPM25 = document.getElementById('actualPM25');
+        const predictedPM25 = document.getElementById('predictedPM25');
+        const pm25Difference = document.getElementById('pm25Difference');
         
         let predictionHistory = [];
         let chart = null;
+        let relationshipChart = null;
 
         function getAQICategory(aqi) {
             if (aqi <= 50) return { category: 'Good', color: 'bg-green-500', text: 'text-white' };
@@ -196,7 +576,8 @@
             return { category: 'Hazardous', color: 'bg-gray-900', text: 'text-white' };
         }
 
-        function updateChart() {
+        function updateCharts() {
+            // Update AQI history chart
             if (chart) {
                 chart.destroy();
             }
@@ -247,24 +628,82 @@
                     }
                 }
             });
+            
+            // Update relationship chart
+            if (relationshipChart) {
+                relationshipChart.destroy();
+            }
+            
+            // Only create relationship chart if we have enough data points
+            if (predictionHistory.length > 1) {
+                relationshipChart = new Chart(paramRelationshipChart, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'PM2.5 vs Temperature',
+                                data: predictionHistory.map(p => ({
+                                    x: p.pollutants.temperature,
+                                    y: p.pollutants.pm25
+                                })),
+                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                pointRadius: 5
+                            },
+                            {
+                                label: 'PM2.5 vs Humidity',
+                                data: predictionHistory.map(p => ({
+                                    x: p.pollutants.humidity,
+                                    y: p.pollutants.pm25
+                                })),
+                                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                pointRadius: 5
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'PM2.5 Level'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Temperature / Humidity'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             submitBtn.disabled = true;
-            submitText.textContent = 'Predicting...';
+            submitText.textContent = 'Analyzing...';
             loadingIcon.classList.remove('hidden');
             result.classList.add('hidden');
 
             const pm25 = parseFloat(document.getElementById('pm25').value);
-            const pm10 = parseFloat(document.getElementById('pm10').value);
-            const no2 = parseFloat(document.getElementById('no2').value);
+            const humidity = parseFloat(document.getElementById('humidity').value);
+            const temperature = parseFloat(document.getElementById('temperature').value);
 
             try {
                 const response = await fetch('/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pm25, pm10, no2 })
+                    body: JSON.stringify({ 
+                        pm25, 
+                        humidity,
+                        temperature
+                    })
                 });
                 
                 if (!response.ok) {
@@ -290,6 +729,37 @@
                         pm10Value.textContent = data.pollutant_values.pm10;
                         no2Value.textContent = data.pollutant_values.no2;
                     }
+                    
+                    // Display health recommendations
+                    if (data.health_recommendations) {
+                        healthRecommendations.innerHTML = `
+                            <p>${data.health_recommendations.general}</p>
+                        `;
+                    }
+                    
+                    // Display weather context
+                    if (data.weather) {
+                        weatherContext.innerHTML = `
+                            <p><span class="font-semibold">Condition:</span> ${data.weather.condition}</p>
+                            <p><span class="font-semibold">Impact:</span> ${data.health_recommendations.weather_impact}</p>
+                        `;
+                    }
+                    
+                    // Display PM2.5 prediction if available
+                    if (data.pm25_prediction !== undefined) {
+                        pm25PredictionSection.classList.remove('hidden');
+                        actualPM25.textContent = `${pm25.toFixed(2)} μg/m³`;
+                        predictedPM25.textContent = `${data.pm25_prediction} μg/m³`;
+                        
+                        const diff = data.pm25_accuracy.difference;
+                        const diffText = diff >= 0 ? `+${diff}` : diff;
+                        const diffColor = Math.abs(diff) < 5 ? 'text-green-600' : Math.abs(diff) < 10 ? 'text-yellow-600' : 'text-red-600';
+                        
+                        pm25Difference.textContent = `${diffText} μg/m³`;
+                        pm25Difference.className = `font-semibold ${diffColor}`;
+                    } else {
+                        pm25PredictionSection.classList.add('hidden');
+                    }
 
                     // Add to history
                     predictionHistory.push({ 
@@ -297,15 +767,15 @@
                         timestamp: new Date(),
                         pollutants: {
                             pm25: pm25,
-                            pm10: pm10,
-                            no2: no2
+                            humidity: humidity,
+                            temperature: temperature
                         }
                     });
                     
                     if (predictionHistory.length > 10) {
                         predictionHistory.shift();
                     }
-                    updateChart();
+                    updateCharts();
                 } else {
                     throw new Error(data.error || 'Unknown error occurred');
                 }
@@ -320,13 +790,291 @@
                 `;
             } finally {
                 submitBtn.disabled = false;
-                submitText.textContent = 'Predict AQI';
+                submitText.textContent = 'Analyze Air Quality';
                 loadingIcon.classList.add('hidden');
             }
         });
+        
+        // Function to load time series data
+        async function loadTimeSeriesData() {
+            const timeSeriesStats = document.getElementById('timeSeriesStats');
+            const timeSeriesInsights = document.getElementById('timeSeriesInsights');
+            const timeSeriesPlotContainer = document.getElementById('timeSeriesPlotContainer');
+            const hourlyPatternsContainer = document.getElementById('hourlyPatternsContainer');
+            
+            try {
+                const response = await fetch('/time-series');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display statistics
+                if (data.statistics) {
+                    let statsHTML = `
+                        <div class="col-span-4 grid grid-cols-4 gap-2">
+                            <div class="font-semibold"></div>
+                            <div class="font-semibold text-center">PM2.5</div>
+                            <div class="font-semibold text-center">Temperature</div>
+                            <div class="font-semibold text-center">Humidity</div>
+                            
+                            <div class="font-semibold">Average</div>
+                            <div class="text-center">${data.statistics.pm25.mean} μg/m³</div>
+                            <div class="text-center">${data.statistics.temperature.mean} °C</div>
+                            <div class="text-center">${data.statistics.humidity.mean} %</div>
+                            
+                            <div class="font-semibold">Min</div>
+                            <div class="text-center">${data.statistics.pm25.min} μg/m³</div>
+                            <div class="text-center">${data.statistics.temperature.min} °C</div>
+                            <div class="text-center">${data.statistics.humidity.min} %</div>
+                            
+                            <div class="font-semibold">Max</div>
+                            <div class="text-center">${data.statistics.pm25.max} μg/m³</div>
+                            <div class="text-center">${data.statistics.temperature.max} °C</div>
+                            <div class="text-center">${data.statistics.humidity.max} %</div>
+                            
+                            <div class="font-semibold">Std Dev</div>
+                            <div class="text-center">${data.statistics.pm25.std} μg/m³</div>
+                            <div class="text-center">${data.statistics.temperature.std} °C</div>
+                            <div class="text-center">${data.statistics.humidity.std} %</div>
+                        </div>
+                    `;
+                    timeSeriesStats.innerHTML = statsHTML;
+                }
+                
+                // Display insights
+                timeSeriesInsights.innerHTML = `
+                    <p class="mb-2"><strong>PM2.5 Trends:</strong> The data shows variations in PM2.5 levels over time, with an average of ${data.statistics.pm25.mean} μg/m³.</p>
+                    <p class="mb-2"><strong>Temperature Impact:</strong> Temperature ranges from ${data.statistics.temperature.min}°C to ${data.statistics.temperature.max}°C, which can significantly affect air quality.</p>
+                    <p class="mb-2"><strong>Humidity Patterns:</strong> Humidity levels vary between ${data.statistics.humidity.min}% and ${data.statistics.humidity.max}%, potentially influencing pollutant dispersion.</p>
+                    <p><strong>Key Observation:</strong> Looking at hourly patterns can help identify times of day when air quality typically deteriorates or improves.</p>
+                `;
+                
+                // Display time series plot
+                if (data.time_series_plot) {
+                    timeSeriesPlotContainer.innerHTML = `
+                        <img src="data:image/png;base64,${data.time_series_plot}" class="w-full" alt="Time Series Plot">
+                    `;
+                }
+                
+                // Display hourly patterns plot
+                if (data.hourly_pattern_plot) {
+                    hourlyPatternsContainer.innerHTML = `
+                        <img src="data:image/png;base64,${data.hourly_pattern_plot}" class="w-full" alt="Hourly Patterns Plot">
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error loading time series data:', error);
+                timeSeriesStats.innerHTML = `<div class="col-span-4 text-center text-red-500">Error loading data: ${error.message}</div>`;
+                timeSeriesInsights.innerHTML = `<p class="text-red-500">Unable to load insights.</p>`;
+                timeSeriesPlotContainer.innerHTML = `<div class="text-center text-red-500">Unable to load time series plot.</div>`;
+                hourlyPatternsContainer.innerHTML = `<div class="text-center text-red-500">Unable to load hourly patterns plot.</div>`;
+            }
+        }
+        
+        // Function to load correlation data
+        async function loadCorrelationData() {
+            const correlationStats = document.getElementById('correlationStats');
+            const correlationPlotContainer = document.getElementById('correlationPlotContainer');
+            const correlationInterpretation = document.getElementById('correlationInterpretation');
+            
+            try {
+                const response = await fetch('/correlation-analysis');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display correlation coefficients
+                if (data.correlations) {
+                    const pm25Temp = data.correlations.pm25_temp;
+                    const pm25Humidity = data.correlations.pm25_humidity;
+                    const tempHumidity = data.correlations.temp_humidity;
+                    
+                    correlationStats.innerHTML = `
+                        <div class="bg-blue-50 p-3 rounded-lg text-center">
+                            <h4 class="font-semibold text-sm mb-1">PM2.5 & Temperature</h4>
+                            <span class="${pm25Temp > 0 ? 'text-red-600' : 'text-blue-600'} font-bold text-2xl">${pm25Temp}</span>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-lg text-center">
+                            <h4 class="font-semibold text-sm mb-1">PM2.5 & Humidity</h4>
+                            <span class="${pm25Humidity > 0 ? 'text-red-600' : 'text-blue-600'} font-bold text-2xl">${pm25Humidity}</span>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-lg text-center">
+                            <h4 class="font-semibold text-sm mb-1">Temperature & Humidity</h4>
+                            <span class="${tempHumidity > 0 ? 'text-red-600' : 'text-blue-600'} font-bold text-2xl">${tempHumidity}</span>
+                        </div>
+                    `;
+                }
+                
+                // Display correlation plot
+                if (data.plot) {
+                    correlationPlotContainer.innerHTML = `
+                        <img src="data:image/png;base64,${data.plot}" class="w-full" alt="Correlation Plot">
+                    `;
+                }
+                
+                // Display interpretation
+                if (data.interpretation) {
+                    let interpretationHTML = '';
+                    data.interpretation.forEach(interpretation => {
+                        interpretationHTML += `<p>• ${interpretation}</p>`;
+                    });
+                    correlationInterpretation.innerHTML = interpretationHTML;
+                }
+                
+            } catch (error) {
+                console.error('Error loading correlation data:', error);
+                correlationStats.innerHTML = `<div class="col-span-3 text-center text-red-500">Error loading data: ${error.message}</div>`;
+                correlationPlotContainer.innerHTML = `<div class="text-center text-red-500">Unable to load correlation plot.</div>`;
+                correlationInterpretation.innerHTML = `<p class="text-red-500">Unable to load interpretation data.</p>`;
+            }
+        }
+        
+        // Function to load model info
+        async function loadModelInfo() {
+            const modelPerformance = document.getElementById('modelPerformance');
+            const modelFormula = document.getElementById('modelFormula');
+            const modelExplanation = document.getElementById('modelExplanation');
+            
+            try {
+                const response = await fetch('/model-info');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display model performance
+                if (data.performance) {
+                    const r2 = data.performance.r_squared_train;
+                    const tempCoef = data.performance.coefficients.temperature;
+                    const humidityCoef = data.performance.coefficients.humidity;
+                    
+                    let performanceLevel = "Poor";
+                    if (r2 > 0.7) performanceLevel = "Excellent";
+                    else if (r2 > 0.5) performanceLevel = "Good";
+                    else if (r2 > 0.3) performanceLevel = "Fair";
+                    
+                    modelPerformance.innerHTML = `
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <div>
+                                <span class="text-sm text-gray-500">R² (Accuracy):</span>
+                                <div class="text-lg font-bold ${r2 > 0.5 ? 'text-green-600' : r2 > 0.3 ? 'text-yellow-600' : 'text-red-600'}">${r2}</div>
+                                <div class="text-xs text-gray-500">${performanceLevel} model fit</div>
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-500">Dominant Factor:</span>
+                                <div class="text-lg font-bold">${Math.abs(tempCoef) > Math.abs(humidityCoef) ? 'Temperature' : 'Humidity'}</div>
+                                <div class="text-xs text-gray-500">Has strongest influence on PM2.5</div>
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-500">Temperature Effect:</span>
+                                <div class="text-lg font-bold ${tempCoef > 0 ? 'text-red-600' : 'text-blue-600'}">${tempCoef > 0 ? 'Positive' : 'Negative'}</div>
+                                <div class="text-xs text-gray-500">Coefficient: ${tempCoef}</div>
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-500">Humidity Effect:</span>
+                                <div class="text-lg font-bold ${humidityCoef > 0 ? 'text-red-600' : 'text-blue-600'}">${humidityCoef > 0 ? 'Positive' : 'Negative'}</div>
+                                <div class="text-xs text-gray-500">Coefficient: ${humidityCoef}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Display model formula
+                if (data.formula) {
+                    modelFormula.textContent = data.formula;
+                }
+                
+                // Display model explanation
+                if (data.explanation) {
+                    let explanationHTML = '';
+                    data.explanation.forEach(explanation => {
+                        explanationHTML += `<p>• ${explanation}</p>`;
+                    });
+                    modelExplanation.innerHTML = explanationHTML;
+                }
+                
+                // Set up model prediction form handler
+                const modelPredictForm = document.getElementById('modelPredictForm');
+                const modelPredictionResult = document.getElementById('modelPredictionResult');
+                
+                modelPredictForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const temperature = parseFloat(document.getElementById('modelTemp').value);
+                    const humidity = parseFloat(document.getElementById('modelHumidity').value);
+                    
+                    try {
+                        // Calculate prediction using the formula
+                        const predicted = data.performance.coefficients.temperature * temperature + 
+                                         data.performance.coefficients.humidity * humidity + 
+                                         data.performance.intercept;
+                        
+                        // Display result
+                        modelPredictionResult.classList.remove('hidden', 'bg-red-100');
+                        modelPredictionResult.classList.add('bg-green-100');
+                        
+                        let aqiLevel = "Unknown";
+                        let aqiColor = "text-gray-700";
+                        
+                        if (predicted <= 12.0) {
+                            aqiLevel = "Good AQI Range";
+                            aqiColor = "text-green-700";
+                        } else if (predicted <= 35.4) {
+                            aqiLevel = "Moderate AQI Range";
+                            aqiColor = "text-yellow-700";
+                        } else if (predicted <= 55.4) {
+                            aqiLevel = "Unhealthy for Sensitive Groups";
+                            aqiColor = "text-orange-700";
+                        } else if (predicted <= 150.4) {
+                            aqiLevel = "Unhealthy";
+                            aqiColor = "text-red-700";
+                        } else if (predicted <= 250.4) {
+                            aqiLevel = "Very Unhealthy";
+                            aqiColor = "text-purple-700";
+                        } else {
+                            aqiLevel = "Hazardous";
+                            aqiColor = "text-gray-900";
+                        }
+                        
+                        modelPredictionResult.innerHTML = `
+                            <div class="text-center">
+                                <div class="text-xl font-bold mb-2">Predicted PM2.5: ${predicted.toFixed(2)} μg/m³</div>
+                                <div class="font-semibold ${aqiColor}">${aqiLevel}</div>
+                                <p class="mt-2 text-sm text-gray-700">This prediction is based on a temperature of ${temperature}°C and humidity of ${humidity}%.</p>
+                            </div>
+                        `;
+                    } catch (error) {
+                        modelPredictionResult.classList.remove('hidden', 'bg-green-100');
+                        modelPredictionResult.classList.add('bg-red-100');
+                        modelPredictionResult.innerHTML = `
+                            <div class="text-center text-red-700">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                Error: ${error.message}
+                            </div>
+                        `;
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading model info:', error);
+                modelPerformance.innerHTML = `<div class="text-center text-red-500">Error loading data: ${error.message}</div>`;
+                modelFormula.textContent = 'Unable to load model formula.';
+                modelExplanation.innerHTML = `<p class="text-red-500">Unable to load model explanation.</p>`;
+            }
+        }
 
         // Initialize empty chart
-        updateChart();
+        updateCharts();
     </script>
 </body>
 </html>
+
